@@ -1,6 +1,6 @@
 import RSS from 'rss';
 import deprecate from './deprecate';
-import buildiTunesCategories from './buildiTunesCategories';
+import { buildiTunesCategories, buildGooglePlayCategories } from './buildCategories';
 
 export default class Podcast {
   constructor(options, items) {
@@ -28,6 +28,7 @@ export default class Podcast {
 
     this.feedOptions.custom_elements = options.customElements || [];
     this.feedOptions.custom_namespaces = {
+      googleplay: 'http://www.google.com/schemas/play-podcasts/1.0',
       itunes: 'http://www.itunes.com/dtds/podcast-1.0.dtd',
       ...options.customNamespaces,
     };
@@ -75,6 +76,27 @@ export default class Podcast {
         },
       });
     }
+
+    if (options.googlePlayAuthor || options.author) {
+      this.feedOptions.custom_elements.push({ 'googleplay:author': options.googlePlayAuthor || options.author });
+    }
+
+    if (options.googlePlayEmail || (options.itunesOwner && options.itunesOwner.email)) {
+      this.feedOptions.custom_elements.push({ 'googleplay:email': options.googlePlayEmail || options.itunesOwner.email });
+    }
+
+    if (options.googlePlayDescription || options.description) {
+      this.feedOptions.custom_elements.push({ 'googleplay:description': options.googlePlayDescription || options.description })
+    }
+
+    if (options.googlePlayCategory || options.itunesCategory) {
+      const categories = buildGooglePlayCategories(options.googlePlayCategory || options.itunesCategory);
+      categories.forEach((category) => {
+        this.feedOptions.custom_elements.push(category);
+      })
+    }
+
+    this.feedOptions.custom_elements.push({ 'googleplay:explicit': (options.googlePlayExplicit || options.itunesExplicit || false) ? 'Yes' : 'No' });
 
     this.items = [];
     const initialItems = items || [];
@@ -128,6 +150,9 @@ export default class Podcast {
     if (itemOptions.itunesEpisodeType) item.custom_elements.push({ 'itunes:episodeType': itemOptions.itunesEpisodeType });
     if (itemOptions.itunesNewFeedUrl) item.custom_elements.push({ 'itunes:new-feed-url': itemOptions.itunesNewFeedUrl });
 
+    if (itemOptions.googlePlayAuthor || itemOptions.itunesAuthor || itemOptions.author) item.custom_elements.push({ 'googleplay:author': itemOptions.googlePlayAuthor || itemOptions.itunesAuthor || itemOptions.author });
+    if (itemOptions.googlePlayDescription || itemOptions.itunesSummary || itemOptions.description) item.custom_elements.push({ 'googleplay:description': itemOptions.googlePlayDescription || itemOptions.itunesSummary || itemOptions.description });
+    item.custom_elements.push({ 'googleplay:explicit': (itemOptions.googlePlayExplicit || itemOptions.itunesExplicit || false) ? 'Yes' : 'No' });
 
     this.items.push(item);
     return this;
