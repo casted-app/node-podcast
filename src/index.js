@@ -11,7 +11,7 @@ export default class Podcast {
     this.feedOptions = {};
     this.feedOptions.title = options.title || 'Untitled Podcast Feed';
     this.feedOptions.description = options.description || '';
-    this.feedOptions.generator = options.generator || 'Podcast for Node';
+    this.feedOptions.generator = options.generator || 'Casted (https://casted.us)';
     this.feedOptions.feed_url = options.feed_url || options.feedUrl;
     this.feedOptions.site_url = options.site_url || options.siteUrl;
     this.feedOptions.image_url = options.image_url || options.imageUrl;
