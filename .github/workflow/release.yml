@@ -1,0 +1,46 @@
+name: Create Tag and Release
+
+# Trigger the workflow when a pull request is opened, reopened, or synchronized
+on:
+  pull_request:
+    branches:
+      - main
+    types: [opened, reopened, synchronize]
+
+jobs:
+  release:
+    if: github.event.pull_request.base.ref == 'main' && github.event.pull_request.head.ref == 'develop'
+    runs-on: ubuntu-latest
+
+    steps:
+      # Checkout the repository
+      - name: Checkout Code
+        uses: actions/checkout@v3
+
+
+      # Get the release version tag
+      - name: Get release version tag
+        id: tag
+        run: echo "TAG_NAME=$(jq -r '.version' package.json)" >> $GITHUB_ENV
+
+      # Create and push a new tag
+      - name: Create and push tag
+        run: |
+          git config --local user.name "github-actions"
+          git config --local user.email "github-actions@github.com"
+          git tag ${{ env.TAG_NAME }}
+          git push origin ${{ env.TAG_NAME }}
+
+      # Create a GitHub release for the new tag
+      - name: Create GitHub Release
+        id: create_release
+        uses: actions/create-release@v1
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        with:
+          tag_name: ${{ env.TAG_NAME }}
+          release_name: Release ${{ env.TAG_NAME }}
+          body: |
+            Release for tag ${{ env.TAG_NAME }} created from PR.
+          draft: false
+          prerelease: false                  
